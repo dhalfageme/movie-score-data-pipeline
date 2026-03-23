@@ -1,4 +1,3 @@
-# src/bronze/provider1.py
 from src.bronze._bronze_utils import bronze_generic
 
 def bronze_provider1(raw_path=None, bronze_path=None):
