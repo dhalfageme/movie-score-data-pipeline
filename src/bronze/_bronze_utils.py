@@ -2,7 +2,6 @@ from pathlib import Path
 import pandas as pd
 from datetime import datetime
 
-
 def bronze_generic(provider: str,
                    input_files: list,
                    input_format: str = "csv",
@@ -11,15 +10,7 @@ def bronze_generic(provider: str,
     """
     Generic Bronze ingestion function.
 
-    Args:
-        provider: provider name (used in paths)
-        input_files: list of filenames to ingest (relative to base_path)
-        input_format: "csv" or "json"
-        base_path: path to raw files (defaults to data/raw/<provider>/)
-        bronze_path: path to store bronze (defaults to data/bronze/<provider>/)
-
-    Returns:
-        list of DataFrames read
+    Saves partitioned CSVs with ingestion_date, converting JSON to CSV if needed.
     """
     project_root = Path(__file__).resolve().parents[2]
 
@@ -48,7 +39,8 @@ def bronze_generic(provider: str,
             raise ValueError(f"Unsupported input format: {input_format}")
 
         df["ingestion_date"] = ingestion_date
-        out_file = out_path / file
+
+        out_file = out_path / (Path(file).stem + ".csv")
         df.to_csv(out_file, index=False)
         dfs.append(df)
 
