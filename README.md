@@ -55,9 +55,12 @@ movie-score-data-pipeline/
   data source and movie.
 - This design choice simplifies the approach for the POC, ensuring analysts can access 
   consistent movie information across different providers.
-- A potential enhancement would be to merge data for the same movie into a single row.
-- In case of conflicting values between providers, the strategy could either retain one 
-  provider’s values or apply a conflict resolution mechanism that assigns priorities when duplicate information exists.
+- A potential enhancement would be to merge data for the same movie into a single row. Given the final dataset schema — title, year, critic_score, top_critic_score, critics_review_count, audience_score, audience_review_count, box_office_gross_domestic, box_office_gross_international, production_budget, marketing_budget, ingestion_date, silver_ingestion_date, and gold_ingestion_date — most of these columns are exclusive to a single provider (at the moment), except for the grouping keys (title) and year, which are assumed to be consistent across all sources. There is one special column, box_office_gross_domestic, that appears in both Provider 2 and Provider 3.
+
+We could modify the gold model to join the staging data from different providers by title and apply some precedence rules, or even keep all the values from different providers by adding suffixes (for example, _provider1, _provider2). At this stage, however, I prefer to keep things simple: each provider remains as a separate row in the gold model. Extending this to a unified, joined structure later is straightforward, by re‑joining the split provider data according to the business‑defined rules. The current architecture makes it easy to recompute the gold layer whenever the logic changes, starting from the existing silver models.
+
+<img width="1713" height="258" alt="image" src="https://github.com/user-attachments/assets/f5ae075e-ddac-47e8-9046-634a08194500" />
+
 
 For simplicity, the current assumption is that the Gold layer allows consumers to select the desired provider afterward.
 ---
