@@ -33,7 +33,7 @@ wait_silver = ExternalTaskSensor(
 
 gold_task = PythonOperator(
     task_id="gold_incremental_build",
-    python_callable=movies_gold_incremental.build_gold,  # o build_gold_incremental
+    python_callable=movies_gold_incremental.build_gold_incremental,
     dag=dag
 )
 
