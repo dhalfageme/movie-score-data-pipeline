@@ -2,10 +2,15 @@ from pathlib import Path
 import pandas as pd
 from datetime import datetime
 
-def build_intermediate_unified(silver_path: str = None):
+def build_intermediate_unified(silver_path: str = None, providers=None) -> pd.DataFrame:
     """
     Build intermediate unified dataframe by reading the latest Silver staging Parquet files.
     """
+
+    # This is just a default for the initial state of the problems but can be passed on main as required
+    if providers is None:
+        providers = ["provider1", "provider2", "provider3"]
+
     if silver_path is None:
         current_file = Path(__file__).resolve()
         project_root = current_file.parents[3]
@@ -15,7 +20,7 @@ def build_intermediate_unified(silver_path: str = None):
     intermediate_path.mkdir(parents=True, exist_ok=True)
 
     dfs = []
-    for provider in ["provider1", "provider2", "provider3"]:
+    for provider in providers:
         provider_path = silver_path / "staging" / provider
         partitions = [p for p in provider_path.iterdir() if p.is_dir()]
         if not partitions:
