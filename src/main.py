@@ -33,7 +33,7 @@ def main():
 
     # --- 3. Gold: incremental ---
     print("Gold: Building incremental gold dataset")
-    gold_df = movies_gold_incremental.build_gold_incremental(intermediate_df=intermediate_df)
+    gold_df = movies_gold_incremental.build_gold_incremental()
 
     # --- 4. Optionally save gold locally ---
     output_path = "./data/gold/gold_final.parquet"
