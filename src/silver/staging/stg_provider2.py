@@ -1,4 +1,4 @@
-from ._stg_utils import stage_generic
+from .stg_utils import stage_generic
 
 def stage_provider2(ingestion_date: str = None, bronze_path: str = None, silver_path: str = None):
     """
@@ -6,13 +6,13 @@ def stage_provider2(ingestion_date: str = None, bronze_path: str = None, silver_
     """
     return stage_generic(
         provider="provider2",
-        file_names=["provider2.csv"],
+        file_name="provider2.csv",
         rename_map={
             "title": "title",
             "year": "year",
             "audience_average_score": "audience_score",
             "total_audience_ratings": "audience_reviews_count",
-            "domestic_box_office_gross": "box_office_domestic"
+            "domestic_box_office_gross": "box_office_gross_domestic"
         },
         cast_map={
             "total_audience_ratings": "Int64",
