@@ -1,4 +1,3 @@
-# src/silver/staging/provider2.py
 from ._stg_utils import stage_generic
 
 def stage_provider2(ingestion_date: str = None, bronze_path: str = None, silver_path: str = None):

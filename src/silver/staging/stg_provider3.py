@@ -1,4 +1,3 @@
-
 from ._stg_utils import stage_generic
 
 def stage_provider3(ingestion_date: str = None, bronze_path: str = None, silver_path: str = None):
