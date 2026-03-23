@@ -41,15 +41,25 @@ movie-score-data-pipeline/
 - Rename columns to **common field names**
 - Safe type casting for consistency
 - **Intermediate unified model** combines multiple files per provider
+- Assumption made: there are no duplicated rows per movie on the same provider. In other case drop duplicates would be needed.
 
 **Uses ExternalTaskSensor** to trigger only when Bronze dependencies complete.
 
 ### 🥇 Gold Layer
 - **Final unified dataset**: **one row per movie**
-- **Conflict resolution** via priority mechanism (certain providers override others for specific fields)
+- **Conflict resolution** via priority mechanism (certain providers override others for 
+  specific fields)
 - **Incremental updates**: new data appended, existing rows preserved
-- Ready for analytics/business consumption
+- Ready for analytics and business consumption.
+- The Gold model consolidates data from multiple sources and maintains a record for each 
+  data source and movie.
+- This design choice simplifies the approach for the POC, ensuring analysts can access 
+  consistent movie information across different providers.
+- A potential enhancement would be to merge data for the same movie into a single row.
+- In case of conflicting values between providers, the strategy could either retain one 
+  provider’s values or apply a conflict resolution mechanism that assigns priorities when duplicate information exists.
 
+For simplicity, the current assumption is that the Gold layer allows consumers to select the desired provider afterward.
 ---
 
 ## Key Design Benefits
