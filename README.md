@@ -1,51 +1,104 @@
 # Movies Data Unification Pipeline
 
 ## Project Purpose
-The purpose of this project is to **combine data from heterogeneous data sources into a single, unified dataset** ready for data analytics.  
-The solution is designed to be **extensible**, allowing new data sources to be incorporated easily.
+This project **combines data from heterogeneous sources** into a single, unified dataset ready for analytics.  
+The solution is **extensible**, allowing new data sources to be easily incorporated.
 
 ---
 
 ## Architecture Overview
-The project implements a **medallion architecture** with multiple layers. Each data source updates at a different frequency. To accommodate this:
+The project follows a **Medallion architecture** (Bronze → Silver → Gold) designed for sources with different update frequencies:
 
-- Historical data is preserved in the **lower layers** (Bronze and Silver)  
-- The **Gold layer** always contains the most recent, consolidated view  
+- **Bronze/Silver layers** preserve historical data snapshots  
+- **Gold layer** always contains the most recent, consolidated view
 
----
+## Project Structure
+
+```
+movie-score-data-pipeline/
+├── data/
+│ ├── raw/ # Mocked data from 3 providers
+│ ├── bronze/ # Raw data + metadata, partitioned by date
+│ ├── silver/ # Unified column names + staging models
+│ └── gold/ # Final unified dataset (one row per movie)
+├── src/
+│ ├── dags/ # Airflow DAGs orchestrating the pipeline
+│ ├── bronze/ # Bronze layer models per provider
+│ ├── silver/ # Silver staging + intermediate unified models
+│ └── gold/ # Incremental gold model for analytics
+└── main.py # Execute full pipeline with default parameters
+```
 
 ## Layers Description
 
-### Bronze
-- Contains the **raw data** from each source  
-- Adds **metadata** such as the `source` and `ingestion_date`  
-- Data is **partitioned by ingestion date** to keep historical snapshots  
-- Provides the foundation for all downstream processing  
+### 🥉 Bronze Layer
+- **Raw data** from each provider with added metadata (`source`, `ingestion_date`)
+- **Partitioned by ingestion date** to preserve historical snapshots
+- One DAG per provider, frequency matches source update rate
 
-### Silver
-- **Staging models** are built for each data source separately:  
-  - Columns with the same meaning are renamed to **common field names**  
-  - Each provider remains **separate at this stage**  
-- An **intermediate unified model** combines multiple files from the same provider before merging with other sources  
-- Ensures consistent structure without mixing providers into single rows prematurely  
+### 🥈 Silver Layer
+**Staging models** (per provider):
+- Rename columns to **common field names**
+- Safe type casting for consistency
+- **Intermediate unified model** combines multiple files per provider
 
-### Gold
-- Produces the **final unified dataset** with **one row per movie**  
-- Combines all providers while resolving conflicts using a **priority mechanism**, where certain sources take precedence for specific fields  
-- Provides a **ready-to-use dataset for analytics**  
+**Uses ExternalTaskSensor** to trigger only when Bronze dependencies complete.
+
+### 🥇 Gold Layer
+- **Final unified dataset**: **one row per movie**
+- **Conflict resolution** via priority mechanism (certain providers override others for specific fields)
+- **Incremental updates**: new data appended, existing rows preserved
+- Ready for analytics/business consumption
 
 ---
+
+## Key Design Benefits
+
+| Benefit | Description |
+|---------|-------------|
+| **Historical preservation** | Bronze/Silver keep full history for reproducibility |
+| **Modular recomputation** | Change Gold logic without reprocessing lower layers |
+| **Extensible** | Add new providers without breaking existing flows |
+| **Unified schema** | Single consistent view while maintaining traceability |
+
+---
+
+## Local Development (Airflow)
+
+```bash
+# Required environment variables
+export PYTHONPATH=/path/to/project:$PYTHONPATH
+export AIRFLOW__CORE__DAGS_FOLDER=/path/to/movie-score-data-pipeline/src/dags
+
+# Terminal 1: Scheduler
+airflow scheduler
+
+# Terminal 2: Webserver  
+airflow webserver
+
+# Terminal 3: Test DAGs
+airflow dags list
+airflow dags trigger bronze_provider1
+Note: Use LocalExecutor in airflow.cfg for parallel task execution.
+
+### Workflow Summary
+
+Raw Data (providers) 
+    ↓ (per provider DAGs)
+Bronze (raw + metadata, partitioned) 
+    ↓ (ExternalTaskSensor)
+Silver (unified columns + staging) 
+    ↓ 
+Gold (final unified dataset)
 
 ## Design Benefits
-- **Preserves raw data history**, enabling reproducibility and debugging  
-- **Modular structure** allows recalculating the Gold layer if business logic changes, without recomputing lower layers  
-- **Extensible**: new data sources can be incorporated without disrupting existing pipelines  
-- **Unified schema** reduces missing data while maintaining traceability  
 
----
+This architecture provides several key advantages:
 
-## Notes
-- Data is stored in a **Bronze → Silver → Gold** workflow  
-- Bronze: raw, partitioned, per provider  
-- Silver: staging + intermediate unified models  
-- Gold: final single-row-per-movie dataset
+1. **Incremental extensibility**: New providers can be added without recomputing Bronze and staging Silver models for existing providers. Only the Silver unified model and Gold layer need recalculation.
+
+2. **Modular recomputation**: Gold business rules can be modified and recomputed independently, without re-executing Silver models.
+
+3. **Configurable conflict resolution**: Providers may have conflicting information for the same fields. The Gold layer can implement **precedence logic** as a future imporvement that can be configured for maximum flexibility on the gold layer.
+
+The result is a **production-ready pipeline** that balances maintainability, performance, and adaptability to changing business requirements.

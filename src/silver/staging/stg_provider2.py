@@ -6,7 +6,7 @@ def stage_provider2(ingestion_date: str = None, bronze_path: str = None, silver_
     """
     return stage_generic(
         provider="provider2",
-        file_names=["provider2.json"],
+        file_names=["provider2.csv"],
         rename_map={
             "title": "title",
             "year": "year",
